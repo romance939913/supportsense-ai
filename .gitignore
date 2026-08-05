@@ -1,0 +1,27 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/.pytest_cache/
+
+# Environment
+.env
+backend/.env
+frontend/.env.local
+
+# Node
+frontend/node_modules/
+
+# Next.js
+frontend/.next/
+
+# Python cache
+*.pyc
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
