@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+app = FastAPI(title="SupportSenseAI API")
 
-@app.get("/")
+
+@app.get("/health")
 def health():
     return {"status": "ok"}

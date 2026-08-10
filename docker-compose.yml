@@ -1,11 +1,12 @@
 services:
   postgres:
-    image: pgvector/pgvector:pg16
+    image: postgres:17
+
     container_name: supportsense-postgres
 
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: supportsense
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: supportsense
 
     ports:
