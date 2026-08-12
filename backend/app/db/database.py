@@ -6,12 +6,25 @@ from app.core.config import settings
 
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.database_url,
     echo=True,
 )
 
-SessionLocal = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+)
 
 
 class Base(DeclarativeBase):
     pass
+
+
+def get_db():
+    db = SessionLocal()
+
+    try:
+        yield db
+    finally:
+        db.close()
