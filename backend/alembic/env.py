@@ -6,7 +6,7 @@ from app.core.config import settings
 from app.db.database import Base, engine
 
 from app.models import Document
-
+from app.models import User
 
 config = context.config
 
