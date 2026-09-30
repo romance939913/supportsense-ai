@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { login, getCurrentUser } from "./services/auth";
 
 export default function Home() {
@@ -8,6 +9,7 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,6 +25,8 @@ export default function Home() {
       const currentUser = await getCurrentUser(result.access_token);
 
       console.log("Login successful:", currentUser);
+
+      router.push("/admin");
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
