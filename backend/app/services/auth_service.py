@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.user import User
-from app.security import verify_password
+from app.core.security import verify_password
 
 
 def authenticate_user(

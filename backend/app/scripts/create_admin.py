@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.db.database import SessionLocal
 from app.models.user import User
-from app.security import hash_password
+from app.core.security import hash_password
 
 
 def main():
