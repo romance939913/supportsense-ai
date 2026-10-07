@@ -17,6 +17,12 @@ frontend/.next/
 # Python cache
 *.pyc
 
+# pdf artifacts
+output/
+
+# pdf artifacts
+tmp/
+
 # macOS
 .DS_Store
 
