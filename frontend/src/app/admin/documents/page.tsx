@@ -18,35 +18,17 @@ export default function DocumentsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [user, setUser] = useState<CurrentUser | null>(null);
+
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [documentsLoading, setDocumentsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+
   const [error, setError] = useState("");
 
-  async function loadDocuments() {
-    setDocumentsLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/documents/"
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to load documents");
-      }
-
-      const data: Document[] = await response.json();
-
-      setDocuments(data);
-    } catch (error) {
-      console.error(error);
-      setError("Unable to load documents.");
-    } finally {
-      setDocumentsLoading(false);
-    }
-  }
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [editFilename, setEditFilename] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     async function loadPage() {
@@ -75,6 +57,31 @@ export default function DocumentsPage() {
     loadPage();
   }, [router]);
 
+  async function loadDocuments() {
+    setDocumentsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/documents/"
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load documents");
+      }
+
+      const data: Document[] = await response.json();
+
+      setDocuments(data);
+    } catch (error) {
+      console.error(error);
+      setError("Unable to load documents.");
+    } finally {
+      setDocumentsLoading(false);
+    }
+  }
+
+  // document upload functions
   function handleUploadButtonClick() {
     fileInputRef.current?.click();
   }
@@ -154,6 +161,89 @@ export default function DocumentsPage() {
     }
   }
 
+  // edit document functions
+  function handleEditClick(document: Document) {
+    setEditingDocument(document);
+    setEditFilename(document.filename);
+    setError("");
+  }
+
+  function handleEditCancel() {
+    setEditingDocument(null);
+    setEditFilename("");
+  }
+
+  async function handleEditSave() {
+    if (!editingDocument) {
+      return;
+    }
+
+    const filename = editFilename.trim();
+
+    if (!filename) {
+      setError("Filename is required.");
+      return;
+    }
+
+    const accessToken = localStorage.getItem("access_token");
+
+    if (!accessToken) {
+      router.replace("/");
+      return;
+    }
+
+    setSavingEdit(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/documents/${editingDocument.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            filename,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        let message = "Failed to update document.";
+
+        try {
+          const data = await response.json();
+
+          if (data.detail) {
+            message = data.detail;
+          }
+        } catch {
+          // Keep the default error message.
+        }
+
+        throw new Error(message);
+      }
+
+      setEditingDocument(null);
+      setEditFilename("");
+
+      await loadDocuments();
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Failed to update document.");
+      }
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  // final page state checks
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -166,6 +256,7 @@ export default function DocumentsPage() {
     return null;
   }
 
+  // page contents
   return (
     <main className="min-h-screen bg-gray-100">
       <div className="flex min-h-screen">
@@ -290,8 +381,8 @@ export default function DocumentsPage() {
                             <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                               <button
                                 type="button"
-                                disabled
-                                className="mr-4 text-gray-400"
+                                onClick={() => handleEditClick(document)}
+                                className="mr-4 text-blue-600 hover:text-blue-800"
                               >
                                 Edit
                               </button>
@@ -314,6 +405,61 @@ export default function DocumentsPage() {
           </section>
         </div>
       </div>
+
+      {/* document editing modal */}
+      {editingDocument && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Edit Document
+            </h3>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Update the document filename.
+            </p>
+
+            <div className="mt-5">
+              <label
+                htmlFor="document-filename"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Filename
+              </label>
+
+              <input
+                id="document-filename"
+                type="text"
+                value={editFilename}
+                onChange={(event) =>
+                  setEditFilename(event.target.value)
+                }
+                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleEditCancel}
+                disabled={savingEdit}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleEditSave}
+                disabled={savingEdit}
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              >
+                {savingEdit ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
