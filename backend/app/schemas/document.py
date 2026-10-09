@@ -3,11 +3,6 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, model_validator
 
 
-class DocumentCreate(BaseModel):
-    filename: str
-    storage_path: str
-
-
 class DocumentResponse(BaseModel):
     id: int
     filename: str
