@@ -30,6 +30,9 @@ export default function DocumentsPage() {
   const [editFilename, setEditFilename] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
+  const [deletingDocument, setDeletingDocument] = useState<Document | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     async function loadPage() {
       const accessToken = localStorage.getItem("access_token");
@@ -62,9 +65,12 @@ export default function DocumentsPage() {
     setError("");
 
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/documents/"
-      );
+      const accessToken = localStorage.getItem("access_token");
+      const response = await fetch("http://127.0.0.1:8000/documents/", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
 
       if (!response.ok) {
         throw new Error("Failed to load documents");
@@ -81,7 +87,7 @@ export default function DocumentsPage() {
     }
   }
 
-  // document upload functions
+  // document upload handlers
   function handleUploadButtonClick() {
     fileInputRef.current?.click();
   }
@@ -161,7 +167,7 @@ export default function DocumentsPage() {
     }
   }
 
-  // edit document functions
+  // edit document handlers
   function handleEditClick(document: Document) {
     setEditingDocument(document);
     setEditFilename(document.filename);
@@ -240,6 +246,74 @@ export default function DocumentsPage() {
       }
     } finally {
       setSavingEdit(false);
+    }
+  }
+
+  // document delete handlers
+  function handleDeleteClick(document: Document) {
+    setDeletingDocument(document);
+    setError("");
+  }
+
+  function handleDeleteCancel() {
+    setDeletingDocument(null);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deletingDocument) {
+      return;
+    }
+
+    const accessToken = localStorage.getItem("access_token");
+
+    if (!accessToken) {
+      router.replace("/");
+      return;
+    }
+
+    setDeleting(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/documents/${deletingDocument.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        let message = "Failed to delete document.";
+
+        try {
+          const data = await response.json();
+
+          if (data.detail) {
+            message = data.detail;
+          }
+        } catch {
+          // Keep the default error message.
+        }
+
+        throw new Error(message);
+      }
+
+      setDeletingDocument(null);
+
+      await loadDocuments();
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Failed to delete document.");
+      }
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -389,8 +463,8 @@ export default function DocumentsPage() {
 
                               <button
                                 type="button"
-                                disabled
-                                className="text-gray-400"
+                                onClick={() => handleDeleteClick(document)}
+                                className="text-red-600 hover:text-red-800"
                               >
                                 Delete
                               </button>
@@ -454,6 +528,50 @@ export default function DocumentsPage() {
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
               >
                 {savingEdit ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* document delete modal */}
+      {deletingDocument && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Delete Document
+            </h3>
+
+            <p className="mt-3 text-sm text-gray-600">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-900">
+                {deletingDocument.filename}
+              </span>
+              ?
+            </p>
+
+            <p className="mt-2 text-sm text-red-600">
+              This will permanently delete the document from
+              CloudForge storage.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleDeleteCancel}
+                disabled={deleting}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              >
+                {deleting ? "Deleting..." : "Delete Document"}
               </button>
             </div>
           </div>
