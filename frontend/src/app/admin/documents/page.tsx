@@ -62,7 +62,6 @@ export default function DocumentsPage() {
 
   async function loadDocuments() {
     setDocumentsLoading(true);
-    setError("");
 
     try {
       const accessToken = localStorage.getItem("access_token");
@@ -150,7 +149,6 @@ export default function DocumentsPage() {
         throw new Error(message);
       }
 
-      await loadDocuments();
     } catch (error) {
       console.error(error);
 
@@ -160,6 +158,8 @@ export default function DocumentsPage() {
         setError("Failed to upload document.");
       }
     } finally {
+      await loadDocuments();
+
       setUploading(false);
 
       // Allow selecting the same file again later.

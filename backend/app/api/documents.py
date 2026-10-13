@@ -12,9 +12,14 @@ from app.schemas.document import (
     DocumentResponse,
     DocumentUpdate,
 )
-from app.services.s3 import delete_file, upload_file, download_file
-from app.services.chunking import chunk_pages
-from app.services.pdf_extraction import extract_pdf_pages
+
+from app.services.s3 import delete_file, upload_file
+from app.services.document_service import process_document, DocumentProcessingError
+
+from app.services.embeddings import (
+    EMBEDDING_DIMENSIONS,
+    EMBEDDING_MODEL,
+)
 
 
 router = APIRouter(
@@ -28,7 +33,7 @@ router = APIRouter(
     response_model=DocumentResponse,
     status_code=201,
 )
-async def upload_document(
+def upload_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -39,7 +44,7 @@ async def upload_document(
             detail="Filename is required",
         )
 
-    file_bytes = await file.read()
+    file_bytes = file.file.read()
 
     document_id = uuid.uuid4().hex
 
@@ -67,6 +72,18 @@ async def upload_document(
     db.add(new_document)
     db.commit()
     db.refresh(new_document)
+
+    try:
+        process_document(db, new_document)
+    except DocumentProcessingError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "The file was uploaded, but processing failed. "
+                f"You can retry with POST /documents/{new_document.id}/process. "
+                f"Reason: {exc}"
+            ),
+        ) from exc
 
     return new_document
 
@@ -189,8 +206,8 @@ def delete_document(
     db.commit()
 
 
-@router.get("/{document_id}/extraction-preview")
-def preview_document_extraction(
+@router.post("/{document_id}/process")
+def process_document_endpoint(
     document_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -208,38 +225,18 @@ def preview_document_extraction(
         )
 
     try:
-        pdf_bytes = download_file(document.storage_path)
-    except RuntimeError as exc:
+        chunks_stored = process_document(db, document)
+    except DocumentProcessingError as exc:
         raise HTTPException(
             status_code=502,
-            detail="Unable to download document from storage",
+            detail=str(exc),
         ) from exc
-
-    try:
-        pages = extract_pdf_pages(pdf_bytes)
-        chunks = chunk_pages(pages)
-    except Exception as exc:
-        raise HTTPException(
-            status_code=422,
-            detail="Unable to read this file as a PDF",
-        ) from exc
-
-    text = "\n\n".join(pages).strip()
 
     return {
         "document_id": document.id,
-        "page_count": len(pages),
-        "characters_extracted": len(text),
-        "text_extracted": bool(text),
-        "preview": text[:1000],
-        "chunk_count": len(chunks),
-        "chunks_preview": [
-            {
-                "index": chunk.index,
-                "page_number": chunk.page_number,
-                "characters": len(chunk.text),
-                "text": chunk.text[:300],
-            }
-            for chunk in chunks[:3]
-        ],
+        "filename": document.filename,
+        "status": "processed",
+        "chunks_stored": chunks_stored,
+        "embedding_model": EMBEDDING_MODEL,
+        "embedding_dimensions": EMBEDDING_DIMENSIONS,
     }
