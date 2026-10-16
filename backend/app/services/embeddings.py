@@ -44,3 +44,9 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
         raise RuntimeError("Embedding response had an unexpected dimension")
 
     return vectors
+
+
+def embed_query(question: str) -> list[float]:
+    """Embed one question with the same model used for document chunks."""
+    vectors = embed_texts([question])
+    return vectors[0]
