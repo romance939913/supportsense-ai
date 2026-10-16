@@ -3,6 +3,7 @@ from getpass import getpass
 from sqlalchemy import select
 
 from app.db.database import SessionLocal
+from app.models.organization import Organization
 from app.models.user import User
 from app.core.security import hash_password
 
@@ -25,6 +26,14 @@ def main():
         return
 
     with SessionLocal() as db:
+        organization = db.scalar(
+            select(Organization).where(Organization.name == "CloudForge")
+        )
+
+        if organization is None:
+            print("Error: CloudForge organization not found. Run database migrations first.")
+            return
+
         existing_user = db.scalar(
             select(User).where(User.email == email)
         )
@@ -34,6 +43,7 @@ def main():
             return
 
         user = User(
+            organization_id=organization.id,
             email=email,
             password_hash=hash_password(password),
             role="support_admin",
