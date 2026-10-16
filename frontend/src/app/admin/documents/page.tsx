@@ -38,7 +38,7 @@ export default function DocumentsPage() {
       const accessToken = localStorage.getItem("access_token");
 
       if (!accessToken) {
-        router.replace("/");
+        router.replace("/admin/login");
         return;
       }
 
@@ -46,7 +46,7 @@ export default function DocumentsPage() {
         const currentUser = await getCurrentUser(accessToken);
 
         if (currentUser.role !== "support_admin") {
-          router.replace(currentUser.role === "customer" ? "/chat" : "/");
+          router.replace("/admin/login");
           return;
         }
 
@@ -116,7 +116,7 @@ export default function DocumentsPage() {
     const accessToken = localStorage.getItem("access_token");
 
     if (!accessToken) {
-      router.replace("/");
+      router.replace("/admin/login");
       return;
     }
 
@@ -199,7 +199,7 @@ export default function DocumentsPage() {
     const accessToken = localStorage.getItem("access_token");
 
     if (!accessToken) {
-      router.replace("/");
+      router.replace("/admin/login");
       return;
     }
 
@@ -272,7 +272,7 @@ export default function DocumentsPage() {
     const accessToken = localStorage.getItem("access_token");
 
     if (!accessToken) {
-      router.replace("/");
+      router.replace("/admin/login");
       return;
     }
 

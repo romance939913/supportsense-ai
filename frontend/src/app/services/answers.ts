@@ -1,4 +1,5 @@
 const API_URL = "http://127.0.0.1:8000";
+const PUBLIC_ORGANIZATION_ID = 1;
 
 export interface AnswerSource {
   citation: number;
@@ -14,22 +15,16 @@ export interface AnswerResponse {
 
 export async function askSupportQuestion(
   question: string,
-  accessToken: string,
 ): Promise<AnswerResponse> {
   const response = await fetch(`${API_URL}/rag/answer`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, organization_id: PUBLIC_ORGANIZATION_ID }),
   });
 
   if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error("Your session has expired. Please sign in again.");
-    }
-
     if (response.status === 422) {
       throw new Error("Please enter a question with at least 3 characters.");
     }

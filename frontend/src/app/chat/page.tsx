@@ -1,9 +1,8 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { AnswerSource, askSupportQuestion } from "../services/answers";
-import { getCurrentUser } from "../services/auth";
 
 type Message = {
   id: number;
@@ -25,9 +24,6 @@ function Mark({ className = "h-6 w-6" }: { className?: string }) {
 }
 
 export default function CustomerHomePage() {
-  const router = useRouter();
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [checkingSession, setCheckingSession] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [sending, setSending] = useState(false);
@@ -38,39 +34,19 @@ export default function CustomerHomePage() {
   const nextMessageId = useRef(1);
   const conversationEnd = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    async function checkCustomerSession() {
-      const token = localStorage.getItem("access_token");
-      if (!token) { router.replace("/"); return; }
-      try {
-        const currentUser = await getCurrentUser(token);
-        if (currentUser.role === "support_admin") { router.replace("/admin"); return; }
-        if (currentUser.role !== "customer") { localStorage.removeItem("access_token"); router.replace("/"); return; }
-        setAccessToken(token);
-      } catch {
-        localStorage.removeItem("access_token");
-        router.replace("/");
-      } finally { setCheckingSession(false); }
-    }
-    void checkCustomerSession();
-  }, [router]);
-
   useEffect(() => { conversationEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending, chatOpen]);
 
   async function sendQuestion(value: string) {
     const trimmedQuestion = value.trim();
-    if (!trimmedQuestion || !accessToken || sending) return;
+    if (!trimmedQuestion || sending) return;
     setError("");
     setQuestion("");
     setMessages((current) => [...current, { id: nextMessageId.current++, role: "customer", content: trimmedQuestion }]);
     setSending(true);
     try {
-      const result = await askSupportQuestion(trimmedQuestion, accessToken);
+      const result = await askSupportQuestion(trimmedQuestion);
       setMessages((current) => [...current, { id: nextMessageId.current++, role: "assistant", content: result.answer, sources: result.sources }]);
     } catch (sendError) {
-      if (sendError instanceof Error && sendError.message.startsWith("Your session has expired")) {
-        localStorage.removeItem("access_token"); router.replace("/");
-      }
       setError(sendError instanceof Error ? sendError.message : "We couldn’t get an answer right now. Please try again.");
     } finally { setSending(false); }
   }
@@ -79,15 +55,6 @@ export default function CustomerHomePage() {
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void sendQuestion(question); }
   }
-  function handleSignOut() {
-    localStorage.removeItem("access_token");
-    router.replace("/");
-  }
-
-  if (checkingSession || !accessToken) {
-    return <main className="flex min-h-screen items-center justify-center bg-[#080b10] text-sm text-slate-400">Opening your CloudForge home…</main>;
-  }
-
   return (
     <main className="min-h-screen overflow-hidden bg-[#080b10] text-white selection:bg-cyan-300/30">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(17,97,125,0.19),transparent_48%)]" />
@@ -96,7 +63,7 @@ export default function CustomerHomePage() {
         <nav aria-label="Main navigation" className="hidden items-center gap-9 text-[13px] text-slate-400 md:flex">
           <span>Platform</span><span>Developers</span><span>Resources</span><span>Company</span>
         </nav>
-        <div className="flex items-center gap-3"><button type="button" onClick={handleSignOut} className="rounded-full px-3 py-2 text-[13px] text-slate-400 transition hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200">Sign out</button><span className="rounded-full border border-white/20 px-4 py-2 text-[12px] font-medium text-white/90">Get started <span className="ml-2 text-cyan-300">↗</span></span></div>
+        <div className="flex items-center gap-3"><Link href="/admin/login" className="rounded-full border border-white/20 px-4 py-2 text-[12px] font-medium text-white/90 transition hover:border-cyan-200/50 hover:text-cyan-100">Admin login</Link></div>
       </header>
 
       <section className="relative mx-auto grid max-w-[1320px] items-center gap-12 px-6 pb-24 pt-16 md:min-h-[650px] md:grid-cols-[0.92fr_1.08fr] md:gap-8 md:pb-28 md:pt-20 lg:px-10 lg:pt-24">

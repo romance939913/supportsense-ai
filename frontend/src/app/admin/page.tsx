@@ -17,7 +17,7 @@ export default function AdminPage() {
       const accessToken = localStorage.getItem("access_token");
 
       if (!accessToken) {
-        router.replace("/");
+        router.replace("/admin/login");
         return;
       }
 
@@ -25,14 +25,14 @@ export default function AdminPage() {
         const currentUser = await getCurrentUser(accessToken);
 
         if (currentUser.role !== "support_admin") {
-          router.replace(currentUser.role === "customer" ? "/chat" : "/");
+          router.replace("/admin/login");
           return;
         }
 
         setUser(currentUser);
       } catch {
         localStorage.removeItem("access_token");
-        router.replace("/");
+        router.replace("/admin/login");
       } finally {
         setLoading(false);
       }

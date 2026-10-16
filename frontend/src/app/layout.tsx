@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CloudForge Support",
-  description: "Get help from the CloudForge customer support assistant.",
+  title: "CloudForge | Build and ship on the cloud",
+  description: "Explore CloudForge and get answers from the CloudForge support assistant.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,7 +1,6 @@
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password, verify_password
+from app.core.security import verify_password
 from app.models.user import User
 
 
@@ -19,27 +18,3 @@ def authenticate_user(
         return None
 
     return user
-
-
-def register_customer(
-    db: Session,
-    *,
-    email: str,
-    password: str,
-    organization_id: int,
-) -> User | None:
-    existing_user = db.scalar(select(User).where(User.email == email))
-    if existing_user is not None:
-        return None
-
-    customer = User(
-        organization_id=organization_id,
-        email=email,
-        password_hash=hash_password(password),
-        role="customer",
-    )
-    db.add(customer)
-    db.commit()
-    db.refresh(customer)
-
-    return customer

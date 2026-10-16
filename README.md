@@ -78,7 +78,7 @@ npm install
 npm run dev
 ```
 
-The app runs at http://localhost:3000. Log in with the admin account you created above.
+The public CloudForge landing page and support chat run at http://localhost:3000 (also available at `/chat`). Visitors can chat without an account. Sign in to manage support documents at `/admin/login` using the admin account you created above. Public chat requests are restricted to organization 1; change `PUBLIC_ORGANIZATION_ID` in the frontend service and `PUBLIC_ORGANIZATION_ID` in the backend environment together if the demo organization changes.
 
 ## Status
 

@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     s3_bucket_name: str
     openai_api_key: str
     openai_chat_model: str = "gpt-4o-mini"
+    public_organization_id: int = 1
 
     model_config = SettingsConfigDict(
         env_file=".env",
