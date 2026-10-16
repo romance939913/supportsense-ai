@@ -1,5 +1,62 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
 
-export default function Home() {
-  redirect("/chat");
+function Mark({ className = "h-6 w-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 40 40" fill="none" className={className} aria-hidden="true">
+      <path d="M20 3.5 36.5 13v14L20 36.5 3.5 27V13L20 3.5Z" stroke="currentColor" strokeWidth="1.5" />
+      <path d="m12 24 8-13 8 13h-5l-3-5-3 5h-5Zm4 4h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="30" cy="11" r="2" fill="currentColor" />
+    </svg>
+  );
+}
+
+export default function CloudForgeLandingPage() {
+  return (
+    <main className="min-h-screen overflow-hidden bg-[#080b10] text-white selection:bg-cyan-300/30">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(17,97,125,0.19),transparent_48%)]" />
+      <header className="relative z-10 mx-auto flex h-[78px] max-w-[1320px] items-center justify-between border-b border-white/[0.08] px-6 lg:px-10">
+        <div className="flex items-center gap-3"><Mark className="h-9 w-9 text-cyan-300" /><span className="text-[17px] font-semibold tracking-[-0.04em]">cloudforge<span className="text-cyan-300">.</span></span></div>
+        <nav aria-label="Main navigation" className="hidden items-center gap-9 text-[13px] text-slate-400 md:flex">
+          <span>Platform</span><span>Developers</span><span>Resources</span><span>Company</span>
+        </nav>
+        <div className="flex items-center gap-3"><Link href="/admin/login" className="rounded-full border border-white/20 px-4 py-2 text-[12px] font-medium text-white/90 transition hover:border-cyan-200/50 hover:text-cyan-100">Admin login</Link></div>
+      </header>
+
+      <section className="relative mx-auto grid max-w-[1320px] items-center gap-12 px-6 pb-24 pt-16 md:min-h-[650px] md:grid-cols-[0.92fr_1.08fr] md:gap-8 md:pb-28 md:pt-20 lg:px-10 lg:pt-24">
+        <div className="relative z-[1] max-w-[560px]">
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-cyan-200/15 bg-cyan-200/[0.05] px-3.5 py-2 text-[11px] font-medium tracking-[0.08em] text-cyan-100/80"><span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_#67e8f9]" /> THE CLOUD PLATFORM FOR BUILDERS</div>
+          <h1 className="max-w-[620px] text-[clamp(3.1rem,7vw,5.7rem)] font-medium leading-[0.99] tracking-[-0.075em]">From first line<br />to <span className="bg-gradient-to-r from-cyan-200 via-sky-300 to-violet-300 bg-clip-text text-transparent">fully live.</span></h1>
+          <p className="mt-7 max-w-[475px] text-[16px] leading-7 text-slate-400 md:text-[17px]">CloudForge gives your team one thoughtful path from infrastructure code to production. Build with the tools you love. We’ll take care of the cloud around them.</p>
+          <div className="mt-9 flex flex-wrap items-center gap-4"><Link href="/chat" className="rounded-full bg-cyan-300 px-5 py-3 text-[13px] font-semibold text-[#061016] transition hover:bg-cyan-200">Get Support <span className="ml-3">↗</span></Link><span className="px-2 py-3 text-[13px] text-slate-400">Explore the platform <span className="ml-2">→</span></span></div>
+          <div className="mt-14 flex items-center gap-5 border-t border-white/[0.08] pt-6 text-xs text-slate-500"><span>Built for the way you work</span><span className="h-1 w-1 rounded-full bg-slate-700"/><span>IaC-native</span><span className="h-1 w-1 rounded-full bg-slate-700"/><span>Ready for production</span></div>
+        </div>
+
+        <div className="relative mx-auto w-full max-w-[650px] md:ml-auto">
+          <div className="absolute -inset-12 rounded-full bg-cyan-500/[0.07] blur-3xl" />
+          <div className="relative overflow-hidden rounded-[22px] border border-white/[0.12] bg-[#0d121a] shadow-[0_35px_100px_-35px_rgba(0,0,0,0.9)]">
+            <div className="flex h-12 items-center justify-between border-b border-white/[0.08] px-4"><div className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-[#ff6c62]"/><i className="h-2 w-2 rounded-full bg-[#e5bd58]"/><i className="h-2 w-2 rounded-full bg-[#56c78b]"/></div><div className="text-[10px] tracking-wide text-slate-500">cloudforge / acme-api</div><div className="text-[10px] text-slate-600">•••</div></div>
+            <div className="grid min-h-[350px] grid-cols-[1fr_0.86fr] sm:min-h-[390px]">
+              <div className="border-r border-white/[0.07] p-4 sm:p-6"><div className="mb-5 flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-slate-500"><span className="text-cyan-300">◈</span> cloudforge.ts</div>
+                <div className="space-y-2 font-mono text-[10px] leading-[1.9] sm:text-[12px]"><p><span className="text-violet-300">import</span> {'{'} <span className="text-sky-200">App</span>, <span className="text-sky-200">Service</span> {'}'} <span className="text-violet-300">from</span> <span className="text-emerald-300">&quot;@cloudforge/cdk&quot;</span></p><p className="pt-3 text-slate-500">{"// Ship a service, not a pile of config."}</p><p><span className="text-violet-300">const</span> app = <span className="text-violet-300">new</span> <span className="text-sky-200">App</span>();</p><p>&nbsp;</p><p>app.<span className="text-sky-200">add</span>(<span className="text-violet-300">new</span> <span className="text-sky-200">Service</span>(<span className="text-amber-200">&quot;api&quot;</span>, {'{'}</p><p className="pl-4">runtime: <span className="text-emerald-300">&quot;nodejs-22&quot;</span>,</p><p className="pl-4">region: <span className="text-emerald-300">&quot;us-east&quot;</span>,</p><p className="pl-4">database: <span className="text-emerald-300">&quot;postgres&quot;</span>,</p><p>{'}'}));</p><p>&nbsp;</p><p>app.<span className="text-sky-200">deploy</span>();<span className="ml-1 inline-block h-3.5 w-[6px] animate-pulse bg-cyan-300 align-middle"/></p></div>
+                <div className="mt-8 flex items-center gap-2 border-t border-white/[0.07] pt-4 text-[10px] text-slate-500"><span className="text-cyan-300">⌘</span> cloudforge deploy <span className="ml-auto text-slate-600">preview</span></div>
+              </div>
+              <div className="relative flex flex-col justify-between overflow-hidden bg-[radial-gradient(ellipse_at_55%_48%,rgba(31,118,153,0.15),transparent_60%)] p-4 sm:p-6"><div><div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Deployment preview</div><div className="mt-3 flex items-center gap-2 text-xs font-medium text-white/90"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40"/><span className="relative h-2 w-2 rounded-full bg-emerald-400"/></span> Live in iad1</div></div>
+                <div className="absolute inset-x-0 top-[27%] flex justify-center"><div className="relative flex h-44 w-44 items-center justify-center rounded-full border border-cyan-300/10 sm:h-56 sm:w-56"><div className="absolute inset-5 rounded-full border border-cyan-200/10"/><div className="absolute inset-10 rounded-full border border-cyan-200/10"/><div className="absolute h-28 w-28 rounded-full bg-cyan-400/[0.08] blur-xl"/><div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200/25 bg-[#101e29] text-cyan-200 shadow-[0_0_40px_rgba(34,211,238,0.17)]"><Mark className="h-11 w-11"/></div><span className="absolute left-[12%] top-[24%] h-2 w-2 rounded-full bg-violet-300 shadow-[0_0_12px_#c4b5fd]"/><span className="absolute right-[9%] top-[48%] h-1.5 w-1.5 rounded-full bg-cyan-200 shadow-[0_0_10px_#a5f3fc]"/><span className="absolute bottom-[15%] left-[32%] h-1.5 w-1.5 rounded-full bg-sky-300 shadow-[0_0_10px_#7dd3fc]"/></div></div>
+                <div className="relative z-[1] rounded-xl border border-white/[0.09] bg-[#0a1018]/85 p-3.5 backdrop-blur"><div className="flex items-center justify-between text-[10px] text-slate-500"><span>PREVIEW ENVIRONMENT</span><span className="text-emerald-300">READY</span></div><p className="mt-2 truncate font-mono text-[11px] text-slate-300">acme-api-pr-184.cloudforge.app</p><div className="mt-3 h-[2px] overflow-hidden rounded bg-white/10"><div className="h-full w-full bg-gradient-to-r from-cyan-400 to-emerald-300"/></div></div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between border-t border-white/[0.08] bg-white/[0.015] px-4 py-3 text-[10px] text-slate-500"><span>Preview deploy <span className="text-slate-300">#184</span></span><span>Built from feature/auth-flow <span className="text-cyan-300">●</span></span><span className="hidden sm:block">42 sec</span></div>
+          </div>
+          <div className="absolute -bottom-5 -left-5 hidden items-center gap-3 rounded-xl border border-white/10 bg-[#111923] px-4 py-3 shadow-2xl sm:flex"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-300/10 text-emerald-300">✓</span><span><span className="block text-[11px] font-medium text-white">Infrastructure ready</span><span className="mt-0.5 block text-[10px] text-slate-500">No YAML archaeology required</span></span></div>
+        </div>
+      </section>
+
+      <section className="border-y border-white/[0.07] bg-white/[0.018]"><div className="mx-auto grid max-w-[1320px] gap-8 px-6 py-10 md:grid-cols-[0.7fr_1.3fr] md:items-center lg:px-10"><div><p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">The CloudForge approach</p><p className="mt-2 text-lg tracking-tight text-white/90">Your infrastructure, in your hands.</p></div><div className="grid gap-6 sm:grid-cols-3"><div><p className="text-sm font-medium text-slate-200">Define it once</p><p className="mt-1.5 text-xs leading-5 text-slate-500">Model services and environments in a CDK your team can read.</p></div><div><p className="text-sm font-medium text-slate-200">Preview every change</p><p className="mt-1.5 text-xs leading-5 text-slate-500">Give every branch a real, shareable place to run.</p></div><div><p className="text-sm font-medium text-slate-200">Ship with confidence</p><p className="mt-1.5 text-xs leading-5 text-slate-500">Deployments, hosting, and the plumbing beneath them—together.</p></div></div></div></section>
+
+      <section className="mx-auto max-w-[1320px] px-6 py-20 lg:px-10 lg:py-24"><div className="grid gap-10 md:grid-cols-[0.7fr_1.3fr] md:items-start"><div><p className="text-[11px] uppercase tracking-[0.16em] text-cyan-200/75">A little less platform work</p><h2 className="mt-4 max-w-md text-3xl font-medium tracking-[-0.05em] sm:text-4xl">More time for what your product does.</h2></div><div className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.08] sm:grid-cols-2"><div className="bg-[#0b1017] p-6 sm:p-7"><span className="text-lg text-cyan-200">⌘</span><h3 className="mt-5 text-sm font-medium">A developer-first CDK</h3><p className="mt-2 text-sm leading-6 text-slate-500">Keep infrastructure close to your application code, in a shape that makes sense to your team.</p></div><div className="bg-[#0b1017] p-6 sm:p-7"><span className="text-lg text-violet-200">◌</span><h3 className="mt-5 text-sm font-medium">Environments that feel real</h3><p className="mt-2 text-sm leading-6 text-slate-500">Test a change against the services it depends on, then share a live preview before you merge.</p></div><div className="bg-[#0b1017] p-6 sm:p-7"><span className="text-lg text-sky-200">↗</span><h3 className="mt-5 text-sm font-medium">Deployment without the detour</h3><p className="mt-2 text-sm leading-6 text-slate-500">Move from commit to production with clear status and sensible defaults built in.</p></div><div className="bg-[#0b1017] p-6 sm:p-7"><span className="text-lg text-emerald-200">◇</span><h3 className="mt-5 text-sm font-medium">The cloud, made legible</h3><p className="mt-2 text-sm leading-6 text-slate-500">Know what is running, where it lives, and what changed—all from one calm workspace.</p></div></div></div></section>
+
+      <footer className="border-t border-white/[0.07]"><div className="mx-auto flex max-w-[1320px] flex-col gap-4 px-6 py-7 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between lg:px-10"><div className="flex items-center gap-2 text-slate-400"><Mark className="h-6 w-6 text-cyan-300/70"/> cloudforge</div><span>Thoughtfully built for people who build.</span><span>© 2025 CloudForge, Inc.</span></div></footer>
+
+    </main>
+  );
 }
