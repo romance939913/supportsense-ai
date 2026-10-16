@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_user
+from app.api.dependencies import get_current_user, require_support_admin
 from app.db.database import get_db
 from app.models.document import Document
 from app.models.user import User
@@ -25,6 +25,7 @@ from app.services.embeddings import (
 router = APIRouter(
     prefix="/documents",
     tags=["documents"],
+    dependencies=[Depends(require_support_admin)],
 )
 
 

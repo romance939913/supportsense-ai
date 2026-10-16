@@ -45,6 +45,11 @@ export default function DocumentsPage() {
       try {
         const currentUser = await getCurrentUser(accessToken);
 
+        if (currentUser.role !== "support_admin") {
+          router.replace(currentUser.role === "customer" ? "/chat" : "/");
+          return;
+        }
+
         setUser(currentUser);
 
         await loadDocuments();

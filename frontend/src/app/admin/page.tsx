@@ -23,6 +23,12 @@ export default function AdminPage() {
 
       try {
         const currentUser = await getCurrentUser(accessToken);
+
+        if (currentUser.role !== "support_admin") {
+          router.replace(currentUser.role === "customer" ? "/chat" : "/");
+          return;
+        }
+
         setUser(currentUser);
       } catch {
         localStorage.removeItem("access_token");

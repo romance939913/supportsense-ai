@@ -24,9 +24,14 @@ export default function Home() {
 
       const currentUser = await getCurrentUser(result.access_token);
 
-      console.log("Login successful:", currentUser);
-
-      router.push("/admin");
+      if (currentUser.role === "customer") {
+        router.replace("/chat");
+      } else if (currentUser.role === "support_admin") {
+        router.replace("/admin");
+      } else {
+        localStorage.removeItem("access_token");
+        throw new Error("This account role is not supported. Please contact support.");
+      }
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);

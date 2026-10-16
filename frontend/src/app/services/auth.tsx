@@ -8,7 +8,7 @@ export interface LoginResponse {
 export interface CurrentUser {
   id: number;
   email: string;
-  role: string;
+  role: "customer" | "support_admin";
 }
 
 export async function login(
