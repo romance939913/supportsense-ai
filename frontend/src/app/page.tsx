@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login, getCurrentUser } from "./services/auth";
 
@@ -52,7 +53,7 @@ export default function Home() {
           </h1>
 
           <p className="mt-2 text-sm text-zinc-600">
-            Support Admin Portal
+            Sign in to your CloudForge account
           </p>
         </div>
 
@@ -109,6 +110,13 @@ export default function Home() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-sm text-zinc-600">
+          New to CloudForge?{" "}
+          <Link href="/register" className="font-medium text-indigo-700 hover:text-indigo-800">
+            Create a customer account
+          </Link>
+        </p>
       </div>
     </main>
   );
