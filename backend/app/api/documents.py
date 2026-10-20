@@ -1,6 +1,7 @@
 import uuid
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -13,7 +14,7 @@ from app.schemas.document import (
     DocumentUpdate,
 )
 
-from app.services.s3 import delete_file, upload_file
+from app.services.s3 import delete_file, download_file, upload_file
 from app.services.document_service import process_document, DocumentProcessingError
 
 from app.services.embeddings import (
@@ -107,6 +108,34 @@ def get_documents(
     )
 
     return db.scalars(statement).all()
+
+
+@router.get("/{document_id}/preview")
+def preview_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    statement = select(Document).where(
+        Document.id == document_id,
+        Document.organization_id == current_user.organization_id,
+    )
+    document = db.scalar(statement)
+
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    try:
+        file_bytes = download_file(document.storage_path)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail="Failed to load document") from exc
+
+    filename = quote(document.filename, safe="")
+    return Response(
+        content=file_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename*=UTF-8''{filename}"},
+    )
 
 
 @router.get(

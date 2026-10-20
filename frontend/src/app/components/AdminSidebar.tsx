@@ -13,7 +13,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
 
   function handleLogout() {
     localStorage.removeItem("access_token");
-    router.replace("/chat");
+    router.replace("/");
   }
 
   return (

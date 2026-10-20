@@ -33,6 +33,12 @@ export default function DocumentsPage() {
   const [deletingDocument, setDeletingDocument] = useState<Document | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const [previewingDocument, setPreviewingDocument] = useState<Document | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const previewAbortRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
     async function loadPage() {
       const accessToken = localStorage.getItem("access_token");
@@ -65,6 +71,12 @@ export default function DocumentsPage() {
     loadPage();
   }, [router]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   async function loadDocuments() {
     setDocumentsLoading(true);
 
@@ -89,6 +101,52 @@ export default function DocumentsPage() {
     } finally {
       setDocumentsLoading(false);
     }
+  }
+
+  async function handlePreviewClick(document: Document) {
+    previewAbortRef.current?.abort();
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    const controller = new AbortController();
+    previewAbortRef.current = controller;
+    setPreviewingDocument(document);
+    setPreviewUrl("");
+    setPreviewError("");
+    setPreviewLoading(true);
+
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) {
+      setPreviewLoading(false);
+      router.replace("/admin/login");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/documents/${document.id}/preview`,
+        { headers: { Authorization: `Bearer ${accessToken}` }, signal: controller.signal }
+      );
+      if (!response.ok) {
+        throw new Error("Unable to load this document preview.");
+      }
+      const blob = await response.blob();
+      if (previewAbortRef.current !== controller) return;
+      setPreviewUrl(URL.createObjectURL(blob));
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      console.error(error);
+      setPreviewError(error instanceof Error ? error.message : "Unable to load this document preview.");
+    } finally {
+      if (previewAbortRef.current === controller) setPreviewLoading(false);
+    }
+  }
+
+  function closePreview() {
+    previewAbortRef.current?.abort();
+    previewAbortRef.current = null;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewingDocument(null);
+    setPreviewUrl("");
+    setPreviewError("");
   }
 
   // document upload handlers
@@ -444,7 +502,21 @@ export default function DocumentsPage() {
 
                       <tbody className="divide-y divide-gray-200 bg-white">
                         {documents.map((document) => (
-                          <tr key={document.id}>
+                          <tr
+                            key={document.id}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Preview ${document.filename}`}
+                            onClick={() => handlePreviewClick(document)}
+                            onKeyDown={(event) => {
+                              if (event.target !== event.currentTarget) return;
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                handlePreviewClick(document);
+                              }
+                            }}
+                            className="cursor-pointer hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+                          >
                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                               {document.id}
                             </td>
@@ -460,7 +532,10 @@ export default function DocumentsPage() {
                             <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
                               <button
                                 type="button"
-                                onClick={() => handleEditClick(document)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleEditClick(document);
+                                }}
                                 className="mr-4 text-blue-600 hover:text-blue-800"
                               >
                                 Edit
@@ -468,7 +543,10 @@ export default function DocumentsPage() {
 
                               <button
                                 type="button"
-                                onClick={() => handleDeleteClick(document)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleDeleteClick(document);
+                                }}
                                 className="text-red-600 hover:text-red-800"
                               >
                                 Delete
@@ -484,6 +562,42 @@ export default function DocumentsPage() {
           </section>
         </div>
       </div>
+
+      {/* document preview modal */}
+      {previewingDocument && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="document-preview-title"
+        >
+          <div className="flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+              <h3 id="document-preview-title" className="truncate pr-4 text-lg font-semibold text-gray-900">
+                {previewingDocument.filename}
+              </h3>
+              <button
+                type="button"
+                onClick={closePreview}
+                className="shrink-0 rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              >
+                Close
+              </button>
+            </div>
+            <div className="flex min-h-0 flex-1 items-center justify-center bg-gray-100">
+              {previewLoading && <p className="text-sm text-gray-600">Loading preview...</p>}
+              {!previewLoading && previewError && <p className="px-6 text-sm text-red-600">{previewError}</p>}
+              {!previewLoading && previewUrl && (
+                <iframe
+                  title={`Preview of ${previewingDocument.filename}`}
+                  src={previewUrl}
+                  className="h-full w-full border-0"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* document editing modal */}
       {editingDocument && (
