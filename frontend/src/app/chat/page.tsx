@@ -2,6 +2,7 @@
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import { AnswerSource, askSupportQuestion } from "../services/answers";
 
 type Message = {
@@ -12,9 +13,9 @@ type Message = {
 };
 
 const suggestedQuestions = [
-  "How do I get started?",
-  "Where can I find setup instructions?",
-  "How do I contact support?",
+  "How do I deploy my first CloudForge CDK service safely, from setup through verification?",
+  "Which rollout strategy should I use, and what health signals mean I should pause or roll back?",
+  "How do I safely review a preview environment and verify a custom domain and HTTPS before sharing it?",
 ];
 
 export default function SupportChatPage() {
@@ -135,7 +136,73 @@ export default function SupportChatPage() {
                       : "rounded-tl-md border border-white/[0.08] bg-[#151e29] text-slate-200"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  {message.role === "assistant" ? (
+                    <div className="space-y-3 break-words">
+                      <ReactMarkdown
+                        components={{
+                          h1: ({ children }) => (
+                            <h1 className="text-lg font-semibold leading-snug text-white">{children}</h1>
+                          ),
+                          h2: ({ children }) => (
+                            <h2 className="text-base font-semibold leading-snug text-white">{children}</h2>
+                          ),
+                          h3: ({ children }) => (
+                            <h3 className="text-sm font-semibold leading-snug text-white">{children}</h3>
+                          ),
+                          p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+                          strong: ({ children }) => (
+                            <strong className="font-semibold text-white">{children}</strong>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="list-disc space-y-1 pl-5 marker:text-cyan-300">{children}</ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal space-y-1 pl-5 marker:text-cyan-300">{children}</ol>
+                          ),
+                          li: ({ children }) => <li className="pl-1">{children}</li>,
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-2 border-cyan-300/50 pl-3 text-slate-300">
+                              {children}
+                            </blockquote>
+                          ),
+                          pre: ({ children }) => (
+                            <pre className="overflow-x-auto rounded-lg bg-[#080d13] p-3 text-xs leading-5">
+                              {children}
+                            </pre>
+                          ),
+                          code: ({ className, children, ...props }) => {
+                            const isBlock = className?.startsWith("language-");
+                            return (
+                              <code
+                                {...props}
+                                className={
+                                  isBlock
+                                    ? `font-mono text-xs text-cyan-100 ${className}`
+                                    : "rounded bg-black/30 px-1.5 py-0.5 font-mono text-[0.9em] text-cyan-100"
+                                }
+                              >
+                                {children}
+                              </code>
+                            );
+                          },
+                          a: ({ href, children }) => (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-cyan-200 underline underline-offset-2 hover:text-cyan-100"
+                            >
+                              {children}
+                            </a>
+                          ),
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  )}
                 </div>
                 {message.sources && message.sources.length > 0 && (
                   <div className="mt-3 space-y-2">

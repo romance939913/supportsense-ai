@@ -11,6 +11,8 @@ export default function AdminPage() {
 
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [documentCount, setDocumentCount] = useState<number | null>(null);
+  const [documentCountLoading, setDocumentCountLoading] = useState(true);
 
   useEffect(() => {
     async function checkAuthentication() {
@@ -30,6 +32,24 @@ export default function AdminPage() {
         }
 
         setUser(currentUser);
+
+        try {
+          const response = await fetch("http://127.0.0.1:8000/documents/", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (!response.ok) {
+            throw new Error("Failed to load document count");
+          }
+          const documents: unknown = await response.json();
+          if (!Array.isArray(documents)) {
+            throw new Error("Unexpected documents response");
+          }
+          setDocumentCount(documents.length);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setDocumentCountLoading(false);
+        }
       } catch {
         localStorage.removeItem("access_token");
         router.replace("/admin/login");
@@ -88,7 +108,9 @@ export default function AdminPage() {
                   Documents
                 </p>
 
-                <p className="mt-2 text-3xl font-bold text-gray-900">0</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900">
+                  {documentCountLoading ? "…" : documentCount ?? "—"}
+                </p>
 
                 <p className="mt-2 text-sm text-gray-500">
                   Support documents currently available.

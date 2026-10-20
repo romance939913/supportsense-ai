@@ -19,7 +19,7 @@ export default function CloudForgeLandingPage() {
         <nav aria-label="Main navigation" className="hidden items-center gap-9 text-[13px] text-slate-400 md:flex">
           <span>Platform</span><span>Developers</span><span>Resources</span><span>Company</span>
         </nav>
-        <div className="flex items-center gap-3"><Link href="/admin/login" className="rounded-full border border-white/20 px-4 py-2 text-[12px] font-medium text-white/90 transition hover:border-cyan-200/50 hover:text-cyan-100">Admin login</Link></div>
+        <div className="flex items-center gap-3"><Link href="/admin/login" className="rounded-full bg-cyan-300 px-5 py-3 text-[13px] font-semibold text-[#061016] transition hover:bg-cyan-200">Admin login</Link></div>
       </header>
 
       <section className="relative mx-auto grid max-w-[1320px] items-center gap-12 px-6 pb-24 pt-16 md:min-h-[650px] md:grid-cols-[0.92fr_1.08fr] md:gap-8 md:pb-28 md:pt-20 lg:px-10 lg:pt-24">
