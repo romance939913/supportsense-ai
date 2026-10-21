@@ -3,7 +3,7 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { AnswerSource, askSupportQuestion } from "../services/answers";
+import { AnswerSource, askSupportQuestion, fetchDocumentPreview } from "../services/answers";
 
 type Message = {
   id: number;
@@ -22,6 +22,11 @@ export default function SupportChatPage() {
   const [question, setQuestion] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [previewSource, setPreviewSource] = useState<AnswerSource | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const previewAbortRef = useRef<AbortController | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 0,
@@ -36,6 +41,47 @@ export default function SupportChatPage() {
   useEffect(() => {
     conversationEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  async function openSourcePreview(source: AnswerSource) {
+    previewAbortRef.current?.abort();
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    const controller = new AbortController();
+    previewAbortRef.current = controller;
+    setPreviewSource(source);
+    setPreviewUrl("");
+    setPreviewError("");
+    setPreviewLoading(true);
+
+    try {
+      const blob = await fetchDocumentPreview(source.document_id, controller.signal);
+      if (previewAbortRef.current !== controller) return;
+      setPreviewUrl(URL.createObjectURL(blob));
+    } catch (previewRequestError) {
+      if (controller.signal.aborted) return;
+      setPreviewError(
+        previewRequestError instanceof Error
+          ? previewRequestError.message
+          : "We couldn’t load this source document. Please try again.",
+      );
+    } finally {
+      if (previewAbortRef.current === controller) setPreviewLoading(false);
+    }
+  }
+
+  function closeSourcePreview() {
+    previewAbortRef.current?.abort();
+    previewAbortRef.current = null;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewSource(null);
+    setPreviewUrl("");
+    setPreviewError("");
+  }
 
   async function sendQuestion(value: string) {
     const trimmedQuestion = value.trim();
@@ -210,24 +256,35 @@ export default function SupportChatPage() {
                       Sources
                     </p>
                     {message.sources.map((source) => (
-                      <details
+                      <div
                         key={`${message.id}-${source.citation}`}
-                        className="group rounded-xl border border-white/[0.08] bg-[#111923] text-sm"
+                        className="overflow-hidden rounded-xl border border-white/[0.08] bg-[#111923] text-sm"
                       >
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-slate-200 marker:hidden">
-                          <span className="flex min-w-0 items-center gap-2.5">
+                        <div className="flex items-center justify-between gap-3 px-4 py-3">
+                          <div className="flex min-w-0 items-center gap-2.5 text-slate-200">
                             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-cyan-300/10 text-xs font-semibold text-cyan-200">
                               {source.citation}
                             </span>
                             <span className="truncate font-medium">{source.filename}</span>
                             <span className="shrink-0 text-xs text-slate-500">Page {source.page_number}</span>
-                          </span>
-                          <span className="text-slate-500 transition group-open:rotate-180" aria-hidden="true">⌄</span>
-                        </summary>
-                        <p className="border-t border-white/[0.07] px-4 py-3 text-xs leading-5 text-slate-400">
-                          {source.passage}
-                        </p>
-                      </details>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void openSourcePreview(source)}
+                            className="shrink-0 rounded-lg border border-cyan-200/20 px-3 py-1.5 text-xs font-medium text-cyan-100 transition hover:border-cyan-200/50 hover:bg-cyan-200/[0.06]"
+                          >
+                            Preview document
+                          </button>
+                        </div>
+                        <details className="border-t border-white/[0.07] text-xs">
+                          <summary className="cursor-pointer px-4 py-2.5 text-slate-400 hover:text-slate-200">
+                            Show cited excerpt
+                          </summary>
+                          <p className="border-t border-white/[0.07] px-4 py-3 leading-5 text-slate-400">
+                            {source.passage}
+                          </p>
+                        </details>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -310,6 +367,59 @@ export default function SupportChatPage() {
           </p>
         </div>
       </section>
+
+      {previewSource && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#03070d]/80 p-3 backdrop-blur-sm sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="source-preview-title"
+        >
+          <div className="flex h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-cyan-200/15 bg-[#0b121c] shadow-[0_30px_100px_-30px_rgba(0,0,0,0.9)]">
+            <div className="flex items-center justify-between border-b border-white/[0.08] bg-[#101a27] px-5 py-4 sm:px-6">
+              <div className="min-w-0 pr-4">
+                <h2 id="source-preview-title" className="truncate text-base font-semibold text-white">
+                  {previewSource.filename}
+                </h2>
+                <p className="mt-1 text-xs text-slate-400">
+                  <span className="mr-2 rounded-full border border-cyan-200/20 bg-cyan-200/[0.06] px-2 py-0.5 text-cyan-100">
+                    Source {previewSource.citation}
+                  </span>
+                  Cited on page {previewSource.page_number}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeSourcePreview}
+                aria-label="Close document preview"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 text-lg text-slate-300 transition hover:border-cyan-200/30 hover:bg-cyan-200/[0.08] hover:text-white"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex min-h-0 flex-1 items-center justify-center bg-[#080d13] p-2 sm:p-4">
+              {previewLoading && (
+                <div className="flex items-center gap-3 text-sm text-slate-300" role="status">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-cyan-300/30 border-t-cyan-300" />
+                  Loading document...
+                </div>
+              )}
+              {!previewLoading && previewError && (
+                <p className="rounded-xl border border-rose-300/15 bg-rose-300/[0.06] px-5 py-4 text-sm text-rose-200">
+                  {previewError}
+                </p>
+              )}
+              {!previewLoading && previewUrl && (
+                <iframe
+                  title={`Preview of ${previewSource.filename}`}
+                  src={`${previewUrl}#toolbar=0&navpanes=0&page=${previewSource.page_number}`}
+                  className="h-full w-full rounded-lg border border-white/10 bg-white"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

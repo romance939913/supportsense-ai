@@ -29,6 +29,7 @@ def retrieve_passages(
     return [
         AnswerSource(
             citation=citation,
+            document_id=document.id,
             filename=document.filename,
             page_number=chunk.page_number,
             passage=chunk.chunk_text,

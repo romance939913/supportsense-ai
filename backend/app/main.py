@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.core.config import settings
 from app.api.health import router as health_router
 from app.api.documents import router as documents_router
 from app.api.auth import router as auth_router
@@ -10,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(title="SupportSenseAI API")
 
 origins = [
+    settings.frontend_origin,
     "http://localhost:3000",
     "http://127.0.0.1:3000",  # Included in case your browser maps it this way
 ]
