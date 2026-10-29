@@ -88,9 +88,7 @@ The public CloudForge landing page and support chat run at http://localhost:3000
 
 The Next.js frontend is configured for static export to `frontend/out`, so it can
 be hosted as a static site. Set `NEXT_PUBLIC_API_URL` in the frontend build
-environment to the public FastAPI URL. Set `FRONTEND_ORIGIN` in the backend
-environment to the exact deployed frontend origin so browser requests pass CORS.
-The backend continues to use a private S3 bucket for uploaded support PDFs; keep
+environment to the public FastAPI URL. The backend continues to use a private S3 bucket for uploaded support PDFs; keep
 AWS credentials and the OpenAI API key only in the backend's secret environment.
 Public chat is capped at 10 requests per browser visitor and 100 requests total
 per UTC day by default. Configure `DAILY_CHAT_LIMIT_PER_VISITOR` and
