@@ -19,6 +19,7 @@ function getVisitorId(): string {
 
 export interface AnswerSource {
   citation: number;
+  document_id: number;
   filename: string;
   page_number: number;
   passage: string;
