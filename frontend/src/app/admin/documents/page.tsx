@@ -82,7 +82,7 @@ export default function DocumentsPage() {
 
     try {
       const accessToken = localStorage.getItem("access_token");
-      const response = await fetch("http://127.0.0.1:8000/documents/", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/documents/`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -122,7 +122,7 @@ export default function DocumentsPage() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/documents/${document.id}/preview`,
+        `${process.env.NEXT_PUBLIC_API_URL}/documents/${document.id}/preview`,
         { headers: { Authorization: `Bearer ${accessToken}` }, signal: controller.signal }
       );
       if (!response.ok) {
@@ -186,7 +186,7 @@ export default function DocumentsPage() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/documents/upload",
+        `${process.env.NEXT_PUBLIC_API_URL}/documents/upload`,
         {
           method: "POST",
           headers: {
@@ -266,7 +266,7 @@ export default function DocumentsPage() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/documents/${editingDocument.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/documents/${editingDocument.id}`,
         {
           method: "PATCH",
           headers: {
@@ -339,7 +339,7 @@ export default function DocumentsPage() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/documents/${deletingDocument.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/documents/${deletingDocument.id}`,
         {
           method: "DELETE",
           headers: {

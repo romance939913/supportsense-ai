@@ -34,7 +34,7 @@ export default function AdminPage() {
         setUser(currentUser);
 
         try {
-          const response = await fetch("http://127.0.0.1:8000/documents/", {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/documents/`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
           if (!response.ok) {
