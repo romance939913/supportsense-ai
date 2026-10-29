@@ -3,7 +3,7 @@ annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.14.2
 bcrypt==4.0.1
-boto3==1.43.108
+boto3[crt]==1.43.108
 botocore==1.43.108
 cffi==2.1.1
 click==8.4.2
@@ -26,6 +26,7 @@ Mako==1.4.0
 MarkupSafe==3.0.3
 openai==3.27.0
 passlib==1.7.4
+pgvector==0.5.1
 psycopg==3.2.10
 psycopg-binary==3.2.10
 pyasn1==0.6.4

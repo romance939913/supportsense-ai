@@ -98,3 +98,17 @@ per UTC day by default. Configure `DAILY_CHAT_LIMIT_PER_VISITOR` and
 
 Use `.env.example` for backend configuration and `frontend/.env.example` for the
 frontend API URL. Do not commit real credentials.
+
+### Milestone 12 deployment
+
+The lowest-cost managed setup for this portfolio demo is Cloudflare Pages for
+the static frontend and Google Cloud Run for the FastAPI backend, with the
+existing Neon free Postgres project and private AWS S3 bucket. Cloud Run has a
+monthly free usage allowance and scales to zero; billing is still required,
+and usage beyond the free allowance can be charged. The initial API request
+after inactivity may take longer while Cloud Run starts the container.
+
+See [infra/gcp/cloud-run-deploy.md](infra/gcp/cloud-run-deploy.md) for the
+backend image, secret names, migration, and Pages settings. The Cloud Run
+service is limited to one instance to keep costs predictable. Keep all runtime
+secrets in Google Secret Manager.
