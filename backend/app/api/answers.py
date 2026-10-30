@@ -1,12 +1,15 @@
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import Query
+import random
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db.database import get_db
 from app.models.document import Document
+from app.models.suggested_question import SuggestedQuestion
 from app.schemas.answer import AnswerRequest, AnswerResponse
 from app.services.chat_quota import (
     ChatQuotaExceeded,
@@ -19,6 +22,17 @@ from app.services.source_retrieval import retrieve_passages
 
 
 router = APIRouter(prefix="/rag", tags=["rag"])
+
+
+@router.get("/suggested-questions", response_model=list[str])
+def get_suggested_questions(
+    count: int = Query(default=3, ge=1, le=10),
+    db: Session = Depends(get_db),
+):
+    questions = db.scalars(
+        select(SuggestedQuestion.question).where(SuggestedQuestion.active.is_(True))
+    ).all()
+    return random.sample(questions, min(count, len(questions)))
 
 
 @router.get("/documents/{document_id}/preview")

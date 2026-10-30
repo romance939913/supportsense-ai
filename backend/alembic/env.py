@@ -8,6 +8,7 @@ from app.db.database import Base, engine
 from app.models import Document
 from app.models import User
 from app.models import ChatQuota
+from app.models import SuggestedQuestion
 
 config = context.config
 

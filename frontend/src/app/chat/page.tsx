@@ -3,22 +3,24 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { AnswerSource, askSupportQuestion, fetchDocumentPreview } from "../services/answers";
+import { AnswerSource, askSupportQuestion, fetchDocumentPreview, fetchSuggestedQuestions } from "../services/answers";
 
 type Message = {
   id: number;
   role: "assistant" | "customer";
   content: string;
   sources?: AnswerSource[];
+  suggestions?: string[];
 };
 
-const suggestedQuestions = [
+const fallbackSuggestedQuestions = [
   "How do I deploy my first CloudForge CDK service safely, from setup through verification?",
   "Which rollout strategy should I use, and what health signals mean I should pause or roll back?",
   "How do I safely review a preview environment and verify a custom domain and HTTPS before sharing it?",
 ];
 
 export default function SupportChatPage() {
+  const [suggestedQuestions, setSuggestedQuestions] = useState(fallbackSuggestedQuestions);
   const [question, setQuestion] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -37,6 +39,20 @@ export default function SupportChatPage() {
   ]);
   const nextMessageId = useRef(1);
   const conversationEnd = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchSuggestedQuestions()
+      .then((questions) => {
+        if (!cancelled && questions.length > 0) setSuggestedQuestions(questions);
+      })
+      .catch(() => {
+        // Keep the built-in suggestions available if the API is temporarily unavailable.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     conversationEnd.current?.scrollIntoView({ behavior: "smooth" });
@@ -97,15 +113,23 @@ export default function SupportChatPage() {
 
     try {
       const result = await askSupportQuestion(trimmedQuestion);
+      const answerMessageId = nextMessageId.current++;
       setMessages((current) => [
         ...current,
         {
-          id: nextMessageId.current++,
+          id: answerMessageId,
           role: "assistant",
           content: result.answer,
           sources: result.sources,
         },
       ]);
+      void fetchSuggestedQuestions()
+        .catch(() => fallbackSuggestedQuestions)
+        .then((suggestions) => {
+          setMessages((current) => current.map((message) => (
+            message.id === answerMessageId ? { ...message, suggestions } : message
+          )));
+        });
     } catch (sendError) {
       setError(
         sendError instanceof Error
@@ -286,6 +310,31 @@ export default function SupportChatPage() {
                         </details>
                       </div>
                     ))}
+                  </div>
+                )}
+                {message.role === "assistant" && message.suggestions && (
+                  <div className="mt-4">
+                    <div className="flex gap-3 sm:gap-4">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-300 text-sm font-semibold text-[#061016]">
+                        C
+                      </div>
+                      <div className="rounded-2xl rounded-tl-md border border-white/[0.08] bg-[#151e29] px-4 py-3.5 text-sm leading-6 text-slate-200 sm:px-5">
+                        <p>What else can I help you with?</p>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap justify-center gap-2">
+                      {message.suggestions.map((suggestion) => (
+                        <button
+                          key={`${message.id}-${suggestion}`}
+                          type="button"
+                          disabled={sending}
+                          onClick={() => void sendQuestion(suggestion)}
+                          className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-slate-300 transition hover:border-cyan-200/40 hover:bg-cyan-200/[0.06] hover:text-cyan-100 disabled:opacity-50 sm:text-sm"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

@@ -3,6 +3,14 @@ const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000")
 const PUBLIC_ORGANIZATION_ID = 1;
 const VISITOR_ID_KEY = "supportsense-visitor-id";
 
+export async function fetchSuggestedQuestions(): Promise<string[]> {
+  const response = await fetch(`${API_URL}/rag/suggested-questions?count=3`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Could not load suggested questions");
+  return response.json();
+}
+
 function getVisitorId(): string {
   try {
     const existingId = window.localStorage.getItem(VISITOR_ID_KEY);
