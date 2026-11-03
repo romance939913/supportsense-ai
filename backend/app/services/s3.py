@@ -4,10 +4,17 @@ from botocore.exceptions import ClientError
 from app.core.config import settings
 
 
-s3_client = boto3.client(
-    "s3",
-    region_name=settings.s3_region,
-)
+s3_client_config = {
+    "region_name": settings.s3_region,
+}
+if settings.s3_endpoint_url: # Checks if in local dev environment
+    s3_client_config.update(
+        endpoint_url=settings.s3_endpoint_url,
+        aws_access_key_id=settings.s3_access_key_id or "test",
+        aws_secret_access_key=settings.s3_secret_access_key or "test",
+    )
+
+s3_client = boto3.client("s3", **s3_client_config)
 
 
 def upload_file(

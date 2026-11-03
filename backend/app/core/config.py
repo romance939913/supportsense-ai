@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 30
     s3_region: str = "us-east-1"
     s3_bucket_name: str
+    s3_endpoint_url: str | None = None
+    s3_access_key_id: str | None = None
+    s3_secret_access_key: str | None = None
     openai_api_key: str
     openai_chat_model: str = "gpt-4o-mini"
     public_organization_id: int = 1

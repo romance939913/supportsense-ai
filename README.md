@@ -23,17 +23,50 @@ Frontend → FastAPI → PostgreSQL (pgvector)
 - Python 3.11+
 - Node.js 20+
 
-### 1. Start the database
+### 1. Start the local services
 
-From the repo root:
+First, from the repo root, create the Compose environment file and add your LocalStack developer token as `LOCALSTACK_AUTH_TOKEN=your-token`:
+
+```bash
+cp .env.example .env
+```
+
+Then start the services from the repo root:
 
 ```bash
 docker compose up -d
 ```
 
-This starts PostgreSQL on `localhost:5432` with user `supportsense`, password `password`, and database `supportsense`.
+This starts PostgreSQL and LocalStack. PostgreSQL is available at `localhost:5432` with user `supportsense`, password `password`, and database `supportsense`. LocalStack provides a local S3-compatible endpoint at `http://localhost:4566` and creates the `supportsense-documents-local` bucket on startup.
+
+The current LocalStack Docker image requires an auth token. Get a developer token from the [LocalStack web app](https://app.localstack.cloud) and put it in the repo-root `.env` as `LOCALSTACK_AUTH_TOKEN=your-token`. Compose reads this file automatically and passes only that variable into LocalStack. Do not commit your token; `.env` is git-ignored.
+
+Both services keep their data in Docker volumes, so uploaded local files and database rows persist across container restarts. Use `docker compose down` to stop the services while keeping their data. Adding `-v` also deletes the volumes and permanently removes the local database and S3 data.
 
 ### 2. Set up the backend
+
+Create `backend/.env` from its example, then set `DATABASE_URL` to the local Postgres URL below, set `JWT_SECRET_KEY` to a generated secret, and add your OpenAI API key if you want to use AI-powered chat:
+
+```env
+LOCALSTACK_AUTH_TOKEN=your-token
+```
+
+Create `backend/.env` from its example, then set `DATABASE_URL` to the local Postgres URL below, set `JWT_SECRET_KEY` to a generated secret, and add your OpenAI API key if you want to use AI-powered chat:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+In `backend/.env`, configure:
+
+```env
+DATABASE_URL=postgresql+psycopg://supportsense:password@localhost:5432/supportsense
+JWT_SECRET_KEY=your-generated-secret
+```
+
+The example file configures S3 for local development: `S3_BUCKET_NAME=supportsense-documents-local`, `S3_ENDPOINT_URL=http://localhost:4566`, and the dummy LocalStack credentials `test` / `test`. Keep these values for local development. When `S3_ENDPOINT_URL` is set, the backend sends S3 calls to LocalStack; when it is unset in Lambda, boto3 uses the Lambda execution role and AWS S3.
+
+Generate a secret with `openssl rand -hex 32`. Do not use LocalStack credentials or the LocalStack endpoint in production.
 
 ```bash
 cd backend
@@ -41,22 +74,6 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
-
-Create `backend/.env`:
-
-```env
-POSTGRES_USER=supportsense
-POSTGRES_PASSWORD=password
-POSTGRES_DB=supportsense
-
-DATABASE_URL=postgresql+psycopg://supportsense:password@localhost:5432/supportsense
-
-JWT_SECRET_KEY=change-me
-JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
-Generate a real secret with `openssl rand -hex 32`.
 
 Run migrations, create an admin user, and start the API:
 
@@ -83,30 +100,3 @@ The public CloudForge landing page and support chat run at http://localhost:3000
 ## Status
 
 🚧 In active development.
-
-## Deployment readiness
-
-The Next.js frontend is configured for static export to `frontend/out`, so it can
-be hosted as a static site. Set `NEXT_PUBLIC_API_URL` in the frontend build
-environment to the public FastAPI URL. The backend continues to use a private S3 bucket for uploaded support PDFs; keep
-AWS credentials and the OpenAI API key only in the backend's secret environment.
-Public chat is capped at 10 requests per browser visitor and 100 requests total
-per UTC day by default. Configure `DAILY_CHAT_LIMIT_PER_VISITOR` and
-`DAILY_CHAT_LIMIT_GLOBAL` in the backend environment to change those caps.
-
-Use `.env.example` for backend configuration and `frontend/.env.example` for the
-frontend API URL. Do not commit real credentials.
-
-### Milestone 12 deployment
-
-The lowest-cost managed setup for this portfolio demo is Cloudflare Pages for
-the static frontend and Google Cloud Run for the FastAPI backend, with the
-existing Neon free Postgres project and private AWS S3 bucket. Cloud Run has a
-monthly free usage allowance and scales to zero; billing is still required,
-and usage beyond the free allowance can be charged. The initial API request
-after inactivity may take longer while Cloud Run starts the container.
-
-See [infra/gcp/cloud-run-deploy.md](infra/gcp/cloud-run-deploy.md) for the
-backend image, secret names, migration, and Pages settings. The Cloud Run
-service is limited to one instance to keep costs predictable. Keep all runtime
-secrets in Google Secret Manager.
