@@ -16,6 +16,11 @@ from app.schemas.document import (
 
 from app.services.s3 import delete_file, download_file, upload_file
 from app.services.document_service import process_document, DocumentProcessingError
+from app.services.pdf_extraction import (
+    MAX_PDF_PAGES,
+    MAX_PDF_UPLOAD_BYTES,
+    get_pdf_page_count,
+)
 
 from app.services.embeddings import (
     EMBEDDING_DIMENSIONS,
@@ -46,7 +51,38 @@ def upload_document(
             detail="Filename is required",
         )
 
-    file_bytes = file.file.read()
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(
+            status_code=415,
+            detail="Only PDF files are supported",
+        )
+
+    file_bytes = file.file.read(MAX_PDF_UPLOAD_BYTES + 1)
+    if len(file_bytes) > MAX_PDF_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="PDF files must be 10 MiB or smaller",
+        )
+
+    try:
+        page_count = get_pdf_page_count(file_bytes)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="The uploaded file is not a readable PDF",
+        ) from exc
+
+    if page_count == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="PDF files must contain at least one page",
+        )
+
+    if page_count > MAX_PDF_PAGES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"PDF files must contain {MAX_PDF_PAGES} pages or fewer",
+        )
 
     document_id = uuid.uuid4().hex
 

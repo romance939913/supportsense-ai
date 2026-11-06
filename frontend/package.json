@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsc --target ES2022 --module Node16 --moduleResolution Node16 --skipLibCheck --outDir .test-build src/app/services/auth.ts src/app/services/answers.ts && node --test tests/*.test.mjs"
   },
   "dependencies": {
     "next": "16.3.0",

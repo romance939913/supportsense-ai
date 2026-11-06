@@ -100,3 +100,20 @@ The public CloudForge landing page and support chat run at http://localhost:3000
 ## Status
 
 🚧 In active development.
+
+## Tests
+
+Run the backend unit and request-flow tests from `backend/`:
+
+```bash
+cd backend
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+Run the frontend service-journey tests and lint from `frontend/`:
+
+```bash
+cd frontend
+npm test
+npm run lint
+```

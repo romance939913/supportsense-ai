@@ -444,6 +444,9 @@ export default function DocumentsPage() {
                   >
                     {uploading ? "Uploading..." : "Upload Document"}
                   </button>
+                  <p className="mt-2 text-right text-xs text-gray-500">
+                    PDF only · up to 10 pages and 10 MiB
+                  </p>
                 </div>
               </div>
 
