@@ -1,119 +1,152 @@
-# SupportSenseAI
+# SupportSense AI
 
-SupportSenseAI is an AI-powered customer support assistant that lets companies upload internal documentation and provide accurate, context-aware answers through Retrieval-Augmented Generation (RAG).
+**Support answers grounded in your team's own documentation.** SupportSense turns support PDFs into a searchable knowledge base, then uses retrieval-augmented generation (RAG) to answer customer questions with citations to the source material.
 
-## Tech Stack
+This repository includes a CloudForge demo tenant: CloudForge is the fictional company whose support guides power the sample chat experience. **SupportSense is the product; CloudForge is the example customer.**
 
-- Next.js
-- FastAPI
-- PostgreSQL
-- pgvector
-- Docker
-- OpenAI
+<!-- Demo media goes here after recording: docs/media/document-management.gif -->
+<!-- Demo media goes here after recording: docs/media/grounded-chat.gif -->
 
-## Architecture
+## What it does
 
-Frontend → FastAPI → PostgreSQL (pgvector)
+- **Answers from approved support content.** Retrieves relevant passages from organization-owned documents and uses them to generate grounded responses.
+- **Shows its sources.** Answers include cited document passages, and users can open the source PDF preview.
+- **Lets support admins manage knowledge.** Admins can upload and process PDFs, review their document library, and manage existing documents.
+- **Keeps tenant data scoped.** Documents, chunks, and administrative access are associated with an organization.
+- **Protects the upload path.** Uploads must be readable PDFs with 10 pages or fewer and a maximum file size of 10 MiB.
+- **Includes public-chat quotas.** Visitor and global daily limits help bound anonymous demo usage.
 
-## Local Development
+## Product tour
+
+The GIFs planned for this section are an admin document-management flow and a customer chat flow that shows an answer citation opening its source PDF. You do not need to prepare them before trying the project; the recording assets can be added under `docs/media/` when ready.
+
+<!-- Capture: sign in to admin, upload a short PDF, and show it appear in the document list. -->
+<!-- Capture: ask a supported question, show the cited answer, and open the source preview. -->
+
+## How it works
+
+```mermaid
+flowchart LR
+    Visitor[Customer] --> Web[Next.js web app]
+    Admin[Support admin] --> Web
+    Web --> API[FastAPI]
+    API --> DB[(PostgreSQL + pgvector)]
+    API --> S3[(S3 document storage)]
+    API --> OpenAI[OpenAI embeddings and chat]
+```
+
+For ingestion, the API stores the uploaded PDF in S3-compatible storage, extracts its text, splits it into chunks, and stores embeddings in PostgreSQL with pgvector. For a chat question, it retrieves relevant chunks, asks the language model to answer from those passages, and returns the answer with source details.
+
+## Tech stack
+
+| Layer | Technologies |
+| --- | --- |
+| Frontend | Next.js, React, TypeScript, Tailwind CSS |
+| API | FastAPI, Python, SQLAlchemy, Alembic |
+| Data | PostgreSQL, pgvector |
+| File storage | Amazon S3; LocalStack for local development |
+| AI | OpenAI embeddings and chat completions |
+| Local services | Docker Compose |
+
+## Run it locally
 
 ### Prerequisites
 
-- Docker
-- Python 3.11+
-- Node.js 20+
+- Docker Desktop
+- Python 3.11 or newer
+- Node.js 20 or newer
+- A LocalStack developer auth token for the current LocalStack image
+- An OpenAI API key
 
-### 1. Start the local services
+### 1. Start PostgreSQL and LocalStack
 
-First, from the repo root, create the Compose environment file and add your LocalStack developer token as `LOCALSTACK_AUTH_TOKEN=your-token`:
+From the repository root, create the Compose environment file and set `LOCALSTACK_AUTH_TOKEN` to your LocalStack developer token:
 
 ```bash
 cp .env.example .env
 ```
 
-Then start the services from the repo root:
+Then start the local services:
 
 ```bash
 docker compose up -d
 ```
 
-This starts PostgreSQL and LocalStack. PostgreSQL is available at `localhost:5432` with user `supportsense`, password `password`, and database `supportsense`. LocalStack provides a local S3-compatible endpoint at `http://localhost:4566` and creates the `supportsense-documents-local` bucket on startup.
+Compose starts PostgreSQL on port `5432` and LocalStack on port `4566`. The startup script creates the `supportsense-documents-local` bucket. Local database and S3 data persist in Docker volumes. Run `docker compose down` to stop the services; add `-v` only when you want to delete their stored data.
 
-The current LocalStack Docker image requires an auth token. Get a developer token from the [LocalStack web app](https://app.localstack.cloud) and put it in the repo-root `.env` as `LOCALSTACK_AUTH_TOKEN=your-token`. Compose reads this file automatically and passes only that variable into LocalStack. Do not commit your token; `.env` is git-ignored.
+### 2. Configure and start the API
 
-Both services keep their data in Docker volumes, so uploaded local files and database rows persist across container restarts. Use `docker compose down` to stop the services while keeping their data. Adding `-v` also deletes the volumes and permanently removes the local database and S3 data.
-
-### 2. Set up the backend
-
-Create `backend/.env` from its example, then set `DATABASE_URL` to the local Postgres URL below, set `JWT_SECRET_KEY` to a generated secret, and add your OpenAI API key if you want to use AI-powered chat:
-
-```env
-LOCALSTACK_AUTH_TOKEN=your-token
-```
-
-Create `backend/.env` from its example, then set `DATABASE_URL` to the local Postgres URL below, set `JWT_SECRET_KEY` to a generated secret, and add your OpenAI API key if you want to use AI-powered chat:
+In a new terminal, create the backend environment file:
 
 ```bash
 cp backend/.env.example backend/.env
 ```
 
-In `backend/.env`, configure:
+Set these values in `backend/.env` for local development:
 
 ```env
 DATABASE_URL=postgresql+psycopg://supportsense:password@localhost:5432/supportsense
-JWT_SECRET_KEY=your-generated-secret
+JWT_SECRET_KEY=<a-long-random-secret>
+OPENAI_API_KEY=<your-openai-api-key>
 ```
 
-The example file configures S3 for local development: `S3_BUCKET_NAME=supportsense-documents-local`, `S3_ENDPOINT_URL=http://localhost:4566`, and the dummy LocalStack credentials `test` / `test`. Keep these values for local development. When `S3_ENDPOINT_URL` is set, the backend sends S3 calls to LocalStack; when it is unset in Lambda, boto3 uses the Lambda execution role and AWS S3.
+Generate a secret with `openssl rand -hex 32`. Keep the local S3 settings from the example file: they point the API at LocalStack and use its local dummy credentials. Do not use those settings in production.
 
-Generate a secret with `openssl rand -hex 32`. Do not use LocalStack credentials or the LocalStack endpoint in production.
+Install dependencies, apply migrations, create an admin account, and start FastAPI:
 
 ```bash
 cd backend
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-Run migrations, create an admin user, and start the API:
-
-```bash
 alembic upgrade head
 python -m app.scripts.create_admin
 uvicorn app.main:app --reload
 ```
 
-The API runs at http://127.0.0.1:8000 (interactive docs at http://127.0.0.1:8000/docs).
+The API is available at <http://127.0.0.1:8000>; interactive API docs are at <http://127.0.0.1:8000/docs>.
 
-### 3. Start the frontend
+### 3. Configure and start the web app
 
-In a new terminal:
+In another terminal:
 
 ```bash
+cp frontend/.env.example frontend/.env.local
 cd frontend
 npm install
 npm run dev
 ```
 
-The public CloudForge landing page and support chat run at http://localhost:3000 (also available at `/chat`). Visitors can chat without an account. Sign in to manage support documents at `/admin/login` using the admin account you created above. Public chat requests are restricted to organization 1; change `PUBLIC_ORGANIZATION_ID` in the frontend service and `PUBLIC_ORGANIZATION_ID` in the backend environment together if the demo organization changes.
+The CloudForge demo site and public support chat are available at <http://localhost:3000> and <http://localhost:3000/chat>. The admin login is at <http://localhost:3000/admin/login>; use the admin account created in the previous step.
 
-## Status
+The public chat is configured for organization `1`. If you change the demo organization, update `PUBLIC_ORGANIZATION_ID` in the backend environment and the frontend answer service together.
 
-🚧 In active development.
+## Tests and checks
 
-## Tests
-
-Run the backend unit and request-flow tests from `backend/`:
+Run the backend tests from the repository root:
 
 ```bash
 cd backend
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-Run the frontend service-journey tests and lint from `frontend/`:
+Run the frontend service tests and lint:
 
 ```bash
 cd frontend
 npm test
 npm run lint
+```
+
+## Current scope
+
+SupportSense is a portfolio-ready prototype. The repository demonstrates document ingestion, organization-scoped retrieval, cited support answers, and an admin document workflow. The CloudForge site and documents are example tenant content.
+
+## Project structure
+
+```text
+backend/     FastAPI application, RAG services, migrations, and tests
+frontend/    Next.js customer and admin experiences
+infra/aws/   Runtime S3 IAM policy and deployment notes
+localstack/  Local S3 bucket initialization
 ```
