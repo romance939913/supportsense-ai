@@ -2,10 +2,9 @@
 
 **Support answers grounded in your team's own documentation.** SupportSense turns support PDFs into a searchable knowledge base, then uses retrieval-augmented generation (RAG) to answer customer questions with citations to the source material.
 
-This repository includes a CloudForge demo tenant: CloudForge is the fictional company whose support guides power the sample chat experience. **SupportSense is the product; CloudForge is the example customer.**
+Official website: https://supportsense-ai.pages.dev/
 
-<!-- Demo media goes here after recording: docs/media/document-management.gif -->
-<!-- Demo media goes here after recording: docs/media/grounded-chat.gif -->
+This repository includes a CloudForge demo tenant: CloudForge is the fictional company whose support guides power the sample chat experience. **SupportSense is the product; CloudForge is the example customer.**
 
 ## What it does
 
@@ -18,10 +17,17 @@ This repository includes a CloudForge demo tenant: CloudForge is the fictional c
 
 ## Product tour
 
-The GIFs planned for this section are an admin document-management flow and a customer chat flow that shows an answer citation opening its source PDF. You do not need to prepare them before trying the project; the recording assets can be added under `docs/media/` when ready.
+### Customer support chat
 
-<!-- Capture: sign in to admin, upload a short PDF, and show it appear in the document list. -->
-<!-- Capture: ask a supported question, show the cited answer, and open the source preview. -->
+Click the Get Support button on the home page to be directed to the customer chat page. SupportSense uses retrieval-augmented generation (RAG) to find relevant passages in CloudForge's support documentation and return an AI-generated answer with source citations.
+
+![SupportSense chat answering a CloudForge support question](docs/media/chat-demo-gif-large.gif)
+
+### Admin document portal
+
+Support admins use this portal to submit new documentation. Uploads must be readable PDFs that meet the document limits: no more than 10 pages and no larger than 10 MiB. After upload, the API stores the original PDF in AWS S3, extracts and chunks its text, generates embeddings, and saves the document record and searchable vectors in PostgreSQL with pgvector.
+
+![Admin portal uploading CloudForge support documentation](docs/media/admin-demo-gif-large.gif)
 
 ## How it works
 
